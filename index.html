@@ -143,7 +143,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <script>
 /* ═══════════════════════════════ CONFIG ════════════════════════════ */
 // Замени на URL своего бэкенда после деплоя на Railway
-var API_URL = '';
+var API_URL = window.API_URL || 'https://YOUR-BACKEND.railway.app';
 
 /* ═══════════════════════════════ STATE ═════════════════════════════ */
 var S = {
@@ -191,57 +191,57 @@ function loadCache() {
 function pad(n){ return String(n).padStart(2,'0'); }
 
 function createEmployee(d){
-  return api('POST','/api/employees',{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
+  return api('POST','/employees',{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
     var emp={id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
     S.cache.employees.push(emp); return emp;
   });
 }
 function updateEmployee(id,d){
-  return api('PUT','/api/employees/'+id,{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
+  return api('PUT','/employees/'+id,{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
     var emp=empById(id); if(emp){emp.phone=e.phoneNumber;emp.name=e.fullName;emp.pos=e.position;emp.role=e.role;}
     return e;
   });
 }
 function deleteEmployee(id){
-  return api('DELETE','/api/employees/'+id).then(function(){
+  return api('DELETE','/employees/'+id).then(function(){
     S.cache.employees=S.cache.employees.filter(function(e){return e.id!==id;});
   });
 }
 function toggleEmployee(id,v){
-  return api('PATCH','/api/employees/'+id,{isActive:v}).then(function(){
+  return api('PATCH','/employees/'+id+'/toggle',{isActive:v}).then(function(){
     var emp=empById(id); if(emp) emp.active=v;
   });
 }
 
 function createObject(name){
-  return api('POST','/api/objects',{name:name}).then(function(o){
+  return api('POST','/objects',{name:name}).then(function(o){
     var obj={id:o.id,name:o.name,active:o.isActive}; S.cache.objects.push(obj); return obj;
   });
 }
 function updateObject(id,d){
-  return api('PUT','/api/objects/'+id,d).then(function(o){
+  return api('PUT','/objects/'+id,d).then(function(o){
     var obj=objById(id);
     if(obj){if(d.name!==undefined)obj.name=d.name;if(d.active!==undefined)obj.active=d.active;}
     return o;
   });
 }
 function deleteObject(id){
-  return api('DELETE','/api/objects/'+id).then(function(){
+  return api('DELETE','/objects/'+id).then(function(){
     S.cache.objects=S.cache.objects.filter(function(o){return o.id!==id;});
   });
 }
 
 function createEntry(d, userId){
-  return api('POST','/api/time-entries',{workDate:d.date,objectId:d.objId,hoursWorked:parseFloat(d.h)});
+  return api('POST','/time-entries',{workDate:d.date,objectId:d.objId,hoursWorked:parseFloat(d.h)});
 }
 function updateEntry(id,d,actorId){
   var body={};
   if(d.date)  body.workDate=d.date;
   if(d.objId) body.objectId=d.objId;
   if(d.h!=null) body.hoursWorked=parseFloat(d.h);
-  return api('PUT','/api/time-entries/'+id,body);
+  return api('PUT','/time-entries/'+id,body);
 }
-function deleteEntry(id){ return api('DELETE','/api/time-entries/'+id); }
+function deleteEntry(id){ return api('DELETE','/time-entries/'+id); }
 
 function mapEntry(e){
   return {
@@ -253,7 +253,7 @@ function mapEntry(e){
 }
 
 function generateTS(year,month){
-  return api('POST','/api/timesheets/generate',{year:parseInt(year),month:parseInt(month)}).then(function(ts){
+  return api('POST','/timesheets/generate',{year:parseInt(year),month:parseInt(month)}).then(function(ts){
     return {
       id:ts.id, year:ts.year, month:ts.month, status:ts.status, at:ts.generatedAt,
       rows:(ts.rows||[]).map(function(r){
@@ -325,7 +325,7 @@ function loginByPhone(phone){
   var err=document.getElementById('li-err');
   var btn=document.getElementById('li-btn');
   btn.disabled=true; btn.textContent='…';
-  api('POST','/api/login',{phoneNumber:phone},null)
+  api('POST','/auth/login',{phoneNumber:phone},null)
   .then(function(emp){
     S.user={id:emp.id,role:emp.role,name:emp.fullName,phone:emp.phoneNumber};
     S.page=emp.role==='ADMIN'?'employees':'add-entry';
@@ -529,13 +529,15 @@ function allEntriesShell(entries){
 function allEntriesHTML(){ return allEntriesShell(S.cache.allEntries||[]); }
 function bindAllEntries(){
   function reload(){
+    if(S.page!=='all-entries') return;
     var qs=''; if(S.ef.year) qs+='?year='+S.ef.year; if(S.ef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.ef.month);
-    document.getElementById('main').innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)">Загрузка…</div>';
+    var _m=document.getElementById('main'); if(_m) _m.innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)">Загрузка…</div>';
     api('GET','/api/time-entries'+qs).then(function(d){
+      if(S.page!=='all-entries') return;
       S.cache.allEntries=(d||[]).map(mapEntry);
-      document.getElementById('main').innerHTML=allEntriesShell(S.cache.allEntries);
+      var _me=document.getElementById('main'); if(_me) _me.innerHTML=allEntriesShell(S.cache.allEntries);
       bindAllEntries();
-    }).catch(function(e){ toast(String(e),'error'); });
+    }).catch(function(e){ if(S.page==='all-entries') toast(String(e),'error'); });
   }
   reload();
   var ey=document.getElementById('ef-year');
@@ -701,13 +703,15 @@ function myEntriesShell(entries){
 function myEntriesHTML(){ return myEntriesShell(S.cache.myEntries||[]); }
 function bindMyEntries(){
   function reload(){
+    if(S.page!=='my-entries') return;
     var qs=''; if(S.mef.year) qs+='?year='+S.mef.year; if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
-    document.getElementById('main').innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)">Загрузка…</div>';
+    var _m=document.getElementById('main'); if(_m) _m.innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)">Загрузка…</div>';
     api('GET','/api/time-entries/me'+qs).then(function(d){
+      if(S.page!=='my-entries') return;
       S.cache.myEntries=(d||[]).map(mapEntry);
-      document.getElementById('main').innerHTML=myEntriesShell(S.cache.myEntries);
+      var _mm=document.getElementById('main'); if(_mm) _mm.innerHTML=myEntriesShell(S.cache.myEntries);
       bindMyEntries();
-    }).catch(function(e){ toast(String(e),'error'); });
+    }).catch(function(e){ if(S.page==='my-entries') toast(String(e),'error'); });
   }
   reload();
   var ey=document.getElementById('mef-year');
