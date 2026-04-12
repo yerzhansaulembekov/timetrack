@@ -56,9 +56,13 @@ module.exports = async (req, res) => {
         if (!objs.length || !objs[0].is_active)
           return res.status(404).json({ message: 'Объект не найден или неактивен' });
 
+        await client.query(
+          `SELECT id FROM time_entries WHERE employee_id=$1 AND work_date=$2 FOR UPDATE`,
+          [user.id, workDate]
+        );
         const { rows: sums } = await client.query(
           `SELECT COALESCE(SUM(hours_worked),0) as total
-           FROM time_entries WHERE employee_id=$1 AND work_date=$2 FOR UPDATE`,
+           FROM time_entries WHERE employee_id=$1 AND work_date=$2`,
           [user.id, workDate]
         );
         const existing = new Decimal(sums[0].total);

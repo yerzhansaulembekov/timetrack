@@ -35,9 +35,13 @@ module.exports = async (req, res) => {
         const targetDate = req.body.workDate || entry.work_date;
         const targetH    = new Decimal(req.body.hoursWorked ?? entry.hours_worked);
 
+        await client.query(
+          `SELECT id FROM time_entries WHERE employee_id=$1 AND work_date=$2 AND id!=$3 FOR UPDATE`,
+          [entry.employee_id, targetDate, id]
+        );
         const { rows: sums } = await client.query(
           `SELECT COALESCE(SUM(hours_worked),0) as total
-           FROM time_entries WHERE employee_id=$1 AND work_date=$2 AND id!=$3 FOR UPDATE`,
+           FROM time_entries WHERE employee_id=$1 AND work_date=$2 AND id!=$3`,
           [entry.employee_id, targetDate, id]
         );
         const others = new Decimal(sums[0].total);
