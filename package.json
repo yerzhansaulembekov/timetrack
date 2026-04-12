@@ -1,0 +1,8 @@
+{
+  "name": "timetrack",
+  "version": "1.0.0",
+  "dependencies": {
+    "decimal.js": "^10.4.3",
+    "pg": "^8.11.3"
+  }
+}

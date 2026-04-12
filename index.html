@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TimeTrack — Учёт рабочего времени</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d0d0f;--surface:#141417;--border:#252529;
+  --accent:#e8ff47;--accent2:#47ffe8;--text:#f0f0f0;
+  --muted:#666672;--danger:#ff4747;--success:#47ff8a;
+  --font-h:'Syne',sans-serif;--font-m:'DM Mono',monospace;
+  --radius:4px;--ease:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:var(--font-m);overflow:hidden}
+
+/* Shell */
+.shell{display:grid;grid-template-columns:220px 1fr;height:100vh}
+
+/* Sidebar */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.logo{padding:26px 22px 22px;border-bottom:1px solid var(--border);font-family:var(--font-h);font-weight:800;font-size:18px;letter-spacing:-.5px;flex-shrink:0}
+.logo span{color:var(--accent)}
+.nav{padding:14px 10px;flex:1;overflow-y:auto}
+.nav-section{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:14px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);cursor:pointer;font-family:var(--font-m);font-size:12.5px;color:var(--muted);transition:background .15s,color .15s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--border);color:var(--text)}
+.nav-item.active{background:var(--accent);color:#000;font-weight:500}
+.nav-item .icon{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{padding:14px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.role-badge{display:inline-block;padding:3px 8px;border-radius:2px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:var(--border);color:var(--muted);font-family:var(--font-m)}
+.role-badge.admin{background:rgba(232,255,71,.12);color:var(--accent)}
+.user-info{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* Main area */
+.main{overflow:auto;height:100vh;padding:36px 44px}
+.main.ts-mode{overflow:hidden;padding:0;display:flex;flex-direction:column}
+
+/* Page header */
+.page-header{margin-bottom:28px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-title{font-family:var(--font-h);font-size:26px;font-weight:700;letter-spacing:-.5px}
+.page-sub{color:var(--muted);font-size:12px;margin-top:4px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius);font-family:var(--font-m);font-size:12.5px;cursor:pointer;border:none;transition:all .15s var(--ease);white-space:nowrap}
+.btn-primary{background:var(--accent);color:#000;font-weight:500}
+.btn-primary:hover{background:#d4eb30;transform:translateY(-1px)}
+.btn-ghost{background:var(--border);color:var(--text)}
+.btn-ghost:hover{background:#303038}
+.btn-danger{background:rgba(255,71,71,.12);color:var(--danger)}
+.btn-danger:hover{background:rgba(255,71,71,.22)}
+.btn-sm{padding:5px 12px;font-size:11.5px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;animation:fadeUp .25s var(--ease)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:9px 13px;border-bottom:1px solid var(--border);font-family:var(--font-m);font-weight:400}
+td{padding:11px 13px;border-bottom:1px solid rgba(37,37,41,.6);font-size:12.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10.5px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.field input,.field select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--font-m);font-size:13px;outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field input::placeholder{color:var(--muted)}
+.field select option{background:var(--surface)}
+.field-error{font-size:11px;color:var(--danger);min-height:14px}
+
+/* Badge */
+.badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase}
+.badge-active{background:rgba(71,255,138,.1);color:var(--success)}
+.badge-inactive{background:var(--border);color:var(--muted)}
+.badge-admin{background:rgba(232,255,71,.1);color:var(--accent)}
+.badge-employee{background:rgba(71,255,232,.1);color:var(--accent2)}
+.badge-generated{background:rgba(71,255,232,.1);color:var(--accent2)}
+.badge-closed{background:rgba(255,71,71,.1);color:var(--danger)}
+.badge-draft{background:var(--border);color:var(--muted)}
+
+/* Login */
+.login-page{height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(232,255,71,.06) 0%,transparent 70%)}
+.login-box{width:380px}
+.login-logo{font-family:var(--font-h);font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.login-logo span{color:var(--accent)}
+.login-sub{color:var(--muted);font-size:12px;margin-bottom:32px}
+.login-sep{height:1px;background:var(--border);margin:22px 0}
+.demo-label{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.demo-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.demo-btn{padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--font-m);font-size:12px;text-align:center;transition:all .15s}
+.demo-btn:hover{border-color:var(--accent);color:var(--accent)}
+.demo-btn strong{display:block;font-size:13px;margin-bottom:2px;font-family:var(--font-h)}
+
+/* Toast */
+.toasts{position:fixed;bottom:22px;right:22px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:11px 16px;border-radius:var(--radius);min-width:260px;font-size:12.5px;pointer-events:auto;border-left:3px solid;background:var(--surface)}
+.toast-error{border-color:var(--danger);color:var(--danger)}
+.toast-success{border-color:var(--success);color:var(--success)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:460px;max-width:94vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-h);font-size:18px;font-weight:700;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* Empty */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-icon{font-size:34px;margin-bottom:10px;opacity:.4}
+.empty-text{font-size:13px}
+
+/* ── Timesheet full-bleed layout ── */
+.ts-shell{display:flex;flex-direction:column;height:100vh;padding:28px 36px 0}
+.ts-controls{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.ts-title{font-family:var(--font-h);font-size:20px;font-weight:700}
+.ts-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.ts-card{flex:1;min-height:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;display:flex;flex-direction:column;overflow:hidden}
+.ts-card-hdr{flex-shrink:0;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ts-scroll{flex:1;min-height:0;overflow:auto}
+.ts-table{border-collapse:collapse;min-width:100%}
+.ts-table th,.ts-table td{padding:6px 9px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap}
+.ts-table thead th{background:var(--bg);color:var(--muted);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;position:sticky;top:0;z-index:2}
+.ts-emp{min-width:148px;max-width:148px;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;background:var(--surface);z-index:3;border-right:2px solid var(--border)!important}
+.ts-table thead .ts-emp{background:var(--bg);z-index:4}
+.ts-cell{text-align:center;color:var(--accent2);font-weight:500}
+.ts-dot{text-align:center;color:var(--border)}
+.ts-sum{text-align:center;font-weight:600;color:var(--accent)}
+.ts-days{text-align:center;color:var(--accent2)}
+.ts-blank{flex:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ═══════════════════════════════ CONFIG ════════════════════════════ */
+// Замени на URL своего бэкенда после деплоя на Railway
+var API_URL = '';
+
+/* ═══════════════════════════════ STATE ═════════════════════════════ */
+var S = {
+  user:null, page:'login', toasts:[], modal:null, ts:null,
+  ef:{year:'', month:''}, mef:{year:'', month:''},
+  cache:{employees:[], objects:[]}
+};
+var app = document.getElementById('app');
+
+/* ═══════════════════════════════ API CLIENT ════════════════════════ */
+function api(method, path, body, userId) {
+  var headers = {'Content-Type':'application/json'};
+  var phone = S.user ? S.user.phone : null;
+  if (phone) headers['X-User-Phone'] = phone;
+  return fetch(API_URL + path, {
+    method: method,
+    headers: headers,
+    body: body ? JSON.stringify(body) : undefined
+  }).then(function(res) {
+    if (res.status === 204) return null;
+    return res.json().then(function(data) {
+      if (!res.ok) throw data.message || 'Ошибка запроса';
+      return data;
+    });
+  });
+}
+
+/* ═══════════════════════════════ CACHE LOADER ══════════════════════ */
+function loadCache() {
+  return Promise.all([
+    api('GET', '/employees', null, null).then(function(d){
+      S.cache.employees=(d||[]).map(function(e){
+        return {id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
+      });
+    }).catch(function(){}),
+    api('GET', '/objects', null, null).then(function(d){
+      S.cache.objects=(d||[]).map(function(o){
+        return {id:o.id,name:o.name,active:o.isActive,created:o.createdAt};
+      });
+    }).catch(function(){})
+  ]);
+}
+
+/* ═══════════════════════════════ API WRAPPERS ══════════════════════ */
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function createEmployee(d){
+  return api('POST','/api/employees',{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
+    var emp={id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
+    S.cache.employees.push(emp); return emp;
+  });
+}
+function updateEmployee(id,d){
+  return api('PUT','/api/employees/'+id,{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
+    var emp=empById(id); if(emp){emp.phone=e.phoneNumber;emp.name=e.fullName;emp.pos=e.position;emp.role=e.role;}
+    return e;
+  });
+}
+function deleteEmployee(id){
+  return api('DELETE','/api/employees/'+id).then(function(){
+    S.cache.employees=S.cache.employees.filter(function(e){return e.id!==id;});
+  });
+}
+function toggleEmployee(id,v){
+  return api('PATCH','/api/employees/'+id,{isActive:v}).then(function(){
+    var emp=empById(id); if(emp) emp.active=v;
+  });
+}
+
+function createObject(name){
+  return api('POST','/api/objects',{name:name}).then(function(o){
+    var obj={id:o.id,name:o.name,active:o.isActive}; S.cache.objects.push(obj); return obj;
+  });
+}
+function updateObject(id,d){
+  return api('PUT','/api/objects/'+id,d).then(function(o){
+    var obj=objById(id);
+    if(obj){if(d.name!==undefined)obj.name=d.name;if(d.active!==undefined)obj.active=d.active;}
+    return o;
+  });
+}
+function deleteObject(id){
+  return api('DELETE','/api/objects/'+id).then(function(){
+    S.cache.objects=S.cache.objects.filter(function(o){return o.id!==id;});
+  });
+}
+
+function createEntry(d, userId){
+  return api('POST','/api/time-entries',{workDate:d.date,objectId:d.objId,hoursWorked:parseFloat(d.h)});
+}
+function updateEntry(id,d,actorId){
+  var body={};
+  if(d.date)  body.workDate=d.date;
+  if(d.objId) body.objectId=d.objId;
+  if(d.h!=null) body.hoursWorked=parseFloat(d.h);
+  return api('PUT','/api/time-entries/'+id,body);
+}
+function deleteEntry(id){ return api('DELETE','/api/time-entries/'+id); }
+
+function mapEntry(e){
+  return {
+    id:e.id, empId:e.employeeId, date:e.workDate, objId:e.objectId,
+    h:e.hoursWorked, at:e.createdAt||e.updatedAt,
+    empName: e.employee?e.employee.fullName:null,
+    objName: e.workObject?e.workObject.name:null
+  };
+}
+
+function generateTS(year,month){
+  return api('POST','/api/timesheets/generate',{year:parseInt(year),month:parseInt(month)}).then(function(ts){
+    return {
+      id:ts.id, year:ts.year, month:ts.month, status:ts.status, at:ts.generatedAt,
+      rows:(ts.rows||[]).map(function(r){
+        var emp=empById(r.employeeId);
+        return {
+          empId:r.employeeId,
+          emp: emp || {name:r.employeeName||r.employeeId},
+          th:r.totalWorkedHours, td:r.totalWorkedDays,
+          cells:(r.cells||[]).map(function(c){return {date:c.workDate,h:c.workedHours};})
+        };
+      })
+    };
+  });
+}
+
+/* ═══════════════════════════════ TOAST ══════════════════════════════ */
+function toast(msg,type){
+  type=type||'success';
+  var id=Date.now();
+  S.toasts.push({id:id,msg:msg,type:type});
+  renderToasts();
+  setTimeout(function(){ S.toasts=S.toasts.filter(function(t){return t.id!==id;}); renderToasts(); },4000);
+}
+function renderToasts(){
+  var el=document.getElementById('toasts-root');
+  if(!el) return;
+  el.innerHTML=S.toasts.map(function(t){ return '<div class="toast toast-'+t.type+'">'+esc(t.msg)+'</div>'; }).join('');
+}
+
+/* ═══════════════════════════════ HELPERS ════════════════════════════ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function nav(page){ S.page=page; S.modal=null; renderWithCache(); }
+function empById(id){ return (S.cache.employees||[]).find(function(e){return e.id===id;}); }
+function objById(id){ return (S.cache.objects||[]).find(function(o){return o.id===id;}); }
+
+/* ═══════════════════════════════ RENDER ═════════════════════════════ */
+function render(){
+  if(!S.user){ app.innerHTML=loginHTML(); bindLogin(); return; }
+  app.innerHTML=shellHTML();
+  bindShell();
+}
+function renderWithCache(){
+  if(!S.user){ render(); return; }
+  loadCache().then(function(){ render(); });
+}
+
+/* ── Login ── */
+function loginHTML(){
+  return '<div class="login-page"><div class="login-box">'+
+    '<div class="login-logo">Time<span>Track</span></div>'+
+    '<div class="login-sub">Система учёта рабочего времени</div>'+
+    '<div class="card">'+
+      '<div class="field" style="margin-bottom:14px">'+
+        '<label>Номер телефона</label>'+
+        '<input id="li-phone" type="tel" placeholder="+7-701-111-2222" autocomplete="tel"/>'+
+        '<div class="field-error" id="li-err"></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%" id="li-btn">Войти →</button>'+
+      '<div class="login-sep"></div>'+
+      '<div class="demo-label">Быстрый вход</div>'+
+      '<div class="demo-btns">'+
+        '<button class="demo-btn" id="demo-emp"><strong>Сотрудник</strong>+7-701-111-2222</button>'+
+        '<button class="demo-btn" id="demo-adm"><strong>Администратор</strong>+7-701-000-0001</button>'+
+      '</div>'+
+    '</div>'+
+  '</div></div><div class="toasts" id="toasts-root"></div>';
+}
+function loginByPhone(phone){
+  var err=document.getElementById('li-err');
+  var btn=document.getElementById('li-btn');
+  btn.disabled=true; btn.textContent='…';
+  api('POST','/api/login',{phoneNumber:phone},null)
+  .then(function(emp){
+    S.user={id:emp.id,role:emp.role,name:emp.fullName,phone:emp.phoneNumber};
+    S.page=emp.role==='ADMIN'?'employees':'add-entry';
+    renderWithCache();
+  })
+  .catch(function(e){ err.textContent=e; btn.disabled=false; btn.textContent='Войти →'; });
+}
+function bindLogin(){
+  document.getElementById('li-btn').onclick=function(){
+    var p=document.getElementById('li-phone').value.trim();
+    document.getElementById('li-err').textContent='';
+    if(!p){document.getElementById('li-err').textContent='Введите номер телефона';return;}
+    loginByPhone(p);
+  };
+  document.getElementById('li-phone').onkeydown=function(e){ if(e.key==='Enter') document.getElementById('li-btn').click(); };
+  document.getElementById('demo-emp').onclick=function(){ loginByPhone('+7-701-111-2222'); };
+  document.getElementById('demo-adm').onclick=function(){ loginByPhone('+7-701-000-0001'); };
+}
+
+/* ── Shell ── */
+function shellHTML(){
+  var isAdmin=S.user.role==='ADMIN';
+  var items=isAdmin
+    ?[{id:'employees',ic:'👥',lbl:'Сотрудники'},{id:'objects',ic:'🏗️',lbl:'Объекты'},{id:'all-entries',ic:'📋',lbl:'Все записи'},{id:'timesheets',ic:'📊',lbl:'Табели'}]
+    :[{id:'add-entry',ic:'➕',lbl:'Добавить запись'},{id:'my-entries',ic:'📋',lbl:'Мои записи'}];
+  var nav=items.map(function(n){
+    return '<button class="nav-item'+(S.page===n.id?' active':'')+'" data-page="'+n.id+'"><span class="icon">'+n.ic+'</span>'+esc(n.lbl)+'</button>';
+  }).join('');
+  var isTS=S.page==='timesheets';
+  return '<div class="shell">'+
+    '<aside class="sidebar">'+
+      '<div class="logo">Time<span>Track</span></div>'+
+      '<nav class="nav"><div class="nav-section">Навигация</div>'+nav+'</nav>'+
+      '<div class="sidebar-footer">'+
+        '<div class="role-badge'+(isAdmin?' admin':'')+'">'+esc(isAdmin?'Администратор':'Сотрудник')+'</div>'+
+        '<div class="user-info">'+esc(S.user.name)+'</div>'+
+        '<button class="btn btn-ghost btn-sm" id="logout-btn" style="margin-top:10px;width:100%">Выйти</button>'+
+      '</div>'+
+    '</aside>'+
+    '<main class="main'+(isTS?' ts-mode':'')+'" id="main">'+pageHTML()+'</main>'+
+  '</div>'+
+  modalHTML()+
+  '<div class="toasts" id="toasts-root"></div>';
+}
+function bindShell(){
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(el){
+    el.onclick=function(){ nav(el.dataset.page); };
+  });
+  document.getElementById('logout-btn').onclick=function(){ S.user=null; S.page='login'; render(); };
+  bindPage(); bindModal(); renderToasts();
+}
+
+/* ── Page router ── */
+function pageHTML(){
+  switch(S.page){
+    case 'employees':   return empPageHTML();
+    case 'objects':     return objPageHTML();
+    case 'all-entries': return allEntriesHTML();
+    case 'timesheets':  return tsPageHTML();
+    case 'add-entry':   return addEntryHTML();
+    case 'my-entries':  return myEntriesHTML();
+    default: return '<p style="padding:40px">Страница не найдена</p>';
+  }
+}
+function bindPage(){
+  switch(S.page){
+    case 'employees':   bindEmpPage();        break;
+    case 'objects':     bindObjPage();        break;
+    case 'all-entries': bindAllEntries();     break;
+    case 'timesheets':  bindTsPage();         break;
+    case 'add-entry':   bindAddEntry();       break;
+    case 'my-entries':  bindMyEntries();      break;
+  }
+}
+
+/* ══════════════ PAGE: Сотрудники ══════════════ */
+function empPageHTML(){
+  var rows=DB.employees.map(function(e){
+    return '<tr>'+
+      '<td>'+esc(e.name)+'</td>'+
+      '<td>'+esc(e.phone)+'</td>'+
+      '<td>'+esc(e.pos)+'</td>'+
+      '<td><span class="badge badge-'+(e.role==='ADMIN'?'admin':'employee')+'">'+(e.role==='ADMIN'?'Админ':'Сотрудник')+'</span></td>'+
+      '<td><span class="badge badge-'+(e.active?'active':'inactive')+'">'+(e.active?'Активен':'Неактивен')+'</span></td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="btn btn-ghost btn-sm" data-act="edit" data-id="'+e.id+'">Изменить</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="toggle" data-id="'+e.id+'" data-active="'+e.active+'" style="margin-left:5px">'+(e.active?'Деактивировать':'Активировать')+'</button>'+
+        '<button class="btn btn-danger btn-sm" data-act="del" data-id="'+e.id+'" data-name="'+esc(e.name)+'" style="margin-left:5px">Удалить</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="page-header">'+
+    '<div><div class="page-title">Сотрудники</div><div class="page-sub">Управление составом команды</div></div>'+
+    '<button class="btn btn-primary" id="add-emp-btn">+ Добавить сотрудника</button>'+
+  '</div>'+
+  '<div class="card"><div class="table-wrap"><table>'+
+    '<thead><tr><th>ФИО</th><th>Телефон</th><th>Должность</th><th>Роль</th><th>Статус</th><th>Действия</th></tr></thead>'+
+    '<tbody>'+(rows||'<tr><td colspan="6"><div class="empty"><div class="empty-icon">👥</div><div class="empty-text">Сотрудники ещё не добавлены</div></div></td></tr>')+'</tbody>'+
+  '</table></div></div>';
+}
+function bindEmpPage(){
+  document.getElementById('add-emp-btn').onclick=function(){ S.modal={type:'add-emp'}; render(); };
+  document.querySelectorAll('[data-act]').forEach(function(btn){
+    btn.onclick=function(){
+      var act=btn.dataset.act, id=btn.dataset.id;
+      if(act==='edit'){
+        var emp=empById(id); S.modal={type:'edit-emp',data:emp}; render();
+      } else if(act==='toggle'){
+        var isActive=btn.dataset.active==='true';
+        toggleEmployee(id,!isActive)
+        .then(function(){ toast(isActive?'Сотрудник деактивирован':'Сотрудник активирован'); renderWithCache(); })
+        .catch(function(e){ toast(String(e),'error'); });
+        return;
+      } else if(act==='del'){
+        S.modal={type:'confirm-del',data:{id:id,kind:'employee',label:'сотрудника «'+btn.dataset.name+'»'}}; render();
+      }
+    };
+  });
+}
+
+/* ══════════════ PAGE: Объекты ══════════════ */
+function objPageHTML(){
+  var rows=DB.objects.map(function(o){
+    return '<tr>'+
+      '<td>'+esc(o.name)+'</td>'+
+      '<td><span class="badge badge-'+(o.active?'active':'inactive')+'">'+(o.active?'Активен':'Неактивен')+'</span></td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="btn btn-ghost btn-sm" data-act="edit" data-id="'+o.id+'">Изменить</button>'+
+        '<button class="btn btn-ghost btn-sm" data-act="toggle" data-id="'+o.id+'" data-active="'+o.active+'" style="margin-left:5px">'+(o.active?'Деактивировать':'Активировать')+'</button>'+
+        '<button class="btn btn-danger btn-sm" data-act="del" data-id="'+o.id+'" data-name="'+esc(o.name)+'" style="margin-left:5px">Удалить</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="page-header">'+
+    '<div><div class="page-title">Рабочие объекты</div><div class="page-sub">Управление объектами и проектами</div></div>'+
+    '<button class="btn btn-primary" id="add-obj-btn">+ Добавить объект</button>'+
+  '</div>'+
+  '<div class="card"><div class="table-wrap"><table>'+
+    '<thead><tr><th>Название</th><th>Статус</th><th>Действия</th></tr></thead>'+
+    '<tbody>'+(rows||'<tr><td colspan="3"><div class="empty"><div class="empty-icon">🏗️</div><div class="empty-text">Объекты ещё не добавлены</div></div></td></tr>')+'</tbody>'+
+  '</table></div></div>';
+}
+function bindObjPage(){
+  document.getElementById('add-obj-btn').onclick=function(){ S.modal={type:'add-obj'}; render(); };
+  document.querySelectorAll('[data-act]').forEach(function(btn){
+    btn.onclick=function(){
+      var act=btn.dataset.act, id=btn.dataset.id;
+      if(act==='edit'){
+        var obj=objById(id); S.modal={type:'edit-obj',data:obj}; render();
+      } else if(act==='toggle'){
+        var isActive=btn.dataset.active==='true';
+        updateObject(id,{isActive:!isActive})
+        .then(function(){ toast(isActive?'Объект деактивирован':'Объект активирован'); renderWithCache(); })
+        .catch(function(e){ toast(String(e),'error'); });
+        return;
+      } else if(act==='del'){
+        S.modal={type:'confirm-del',data:{id:id,kind:'object',label:'объект «'+btn.dataset.name+'»'}}; render();
+      }
+    };
+  });
+}
+
+/* ══════════════ PAGE: Все записи ══════════════ */
+function allEntriesShell(entries){
+  entries=entries||[];
+  var curYear=new Date().getFullYear();
+  var yearOpts='<option value="">Все годы</option>';
+  for(var y=2020;y<=2030;y++) yearOpts+='<option value="'+y+'"'+(String(y)===S.ef.year?' selected':'')+'>'+y+'</option>';
+  var monthOpts='<option value="">Все месяцы</option>'+
+    MONTHS.map(function(m,i){ return '<option value="'+pad(i+1)+'"'+(pad(i+1)===S.ef.month?' selected':'')+'>'+m+'</option>'; }).join('');
+  var totalH=entries.reduce(function(s,e){return s+parseFloat(e.h);},0);
+  var subLabel=entries.length+' записей'+( (S.ef.year||S.ef.month) ? ' (фильтр)' : ' всего' );
+  if(entries.length>0) subLabel+=' — '+totalH.toFixed(2)+'ч';
+  var rows=entries.map(function(e){
+    var empName=e.empName||(empById(e.empId)?empById(e.empId).name:e.empId);
+    var objName=e.objName||(objById(e.objId)?objById(e.objId).name:e.objId);
+    return '<tr>'+
+      '<td>'+esc(empName)+'</td>'+
+      '<td>'+e.date+'</td>'+
+      '<td>'+esc(objName)+'</td>'+
+      '<td>'+parseFloat(e.h).toFixed(2)+'ч</td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="btn btn-ghost btn-sm" data-act="edit" data-id="'+e.id+'" data-date="'+e.date+'" data-objid="'+e.objId+'" data-h="'+e.h+'">Изменить</button>'+
+        '<button class="btn btn-danger btn-sm" data-act="del" data-id="'+e.id+'" style="margin-left:5px">Удалить</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="page-header">'+
+    '<div><div class="page-title">Все записи</div><div class="page-sub">'+subLabel+'</div></div>'+
+    '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'+
+      '<div class="field"><label>Год</label><select id="ef-year" style="width:100px">'+yearOpts+'</select></div>'+
+      '<div class="field"><label>Месяц</label><select id="ef-month" style="width:148px">'+monthOpts+'</select></div>'+
+      '<button class="btn btn-ghost btn-sm" id="ef-reset" style="align-self:flex-end">Сбросить</button>'+
+    '</div>'+
+  '</div>'+
+  '<div class="card"><div class="table-wrap"><table>'+
+    '<thead><tr><th>Сотрудник</th><th>Дата</th><th>Объект</th><th>Часы</th><th>Действия</th></tr></thead>'+
+    '<tbody>'+(rows||'<tr><td colspan="5"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Записей не найдено</div></div></td></tr>')+'</tbody>'+
+  '</table></div></div>';
+}
+function allEntriesHTML(){ return allEntriesShell(S.cache.allEntries||[]); }
+function bindAllEntries(){
+  function reload(){
+    var qs=''; if(S.ef.year) qs+='?year='+S.ef.year; if(S.ef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.ef.month);
+    document.getElementById('main').innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)">Загрузка…</div>';
+    api('GET','/api/time-entries'+qs).then(function(d){
+      S.cache.allEntries=(d||[]).map(mapEntry);
+      document.getElementById('main').innerHTML=allEntriesShell(S.cache.allEntries);
+      bindAllEntries();
+    }).catch(function(e){ toast(String(e),'error'); });
+  }
+  reload();
+  var ey=document.getElementById('ef-year');
+  var em=document.getElementById('ef-month');
+  if(ey) ey.onchange=function(){ S.ef.year=ey.value; reload(); };
+  if(em) em.onchange=function(){ S.ef.month=em.value; reload(); };
+  var reset=document.getElementById('ef-reset');
+  if(reset) reset.onclick=function(){ S.ef={year:'',month:''}; reload(); };
+  document.querySelectorAll('[data-act]').forEach(function(btn){
+    btn.onclick=function(){
+      var act=btn.dataset.act, id=btn.dataset.id;
+      if(act==='edit'){
+        var e={id:id,date:btn.dataset.date,objId:btn.dataset.objid,h:btn.dataset.h};
+        S.modal={type:'edit-entry',data:e}; render();
+      } else if(act==='del'){
+        S.modal={type:'confirm-del',data:{id:id,kind:'entry',label:'запись о времени'}}; render();
+      }
+    };
+  });
+}
+
+/* ══════════════ PAGE: Табели ══════════════ */
+var MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+var STATUS_LABELS={DRAFT:'Черновик',GENERATED:'Сформирован',CLOSED:'Закрыт'};
+
+function tsPageHTML(){
+  var curYear=new Date().getFullYear();
+  var curMonth=new Date().getMonth();
+  var yearOpts=''; for(var y=2020;y<=2030;y++){ yearOpts+='<option value="'+y+'"'+(y===curYear?' selected':'')+'>'+y+'</option>'; }
+  var monthOpts=MONTHS.map(function(m,i){ return '<option value="'+(i+1)+'"'+(i===curMonth?' selected':'')+'>'+m+'</option>'; }).join('');
+  var body=S.ts?tsTableHTML():'<div class="ts-blank"><div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Сформируйте табель, чтобы увидеть отчёт</div></div></div>';
+  return '<div class="ts-shell">'+
+    '<div class="ts-controls">'+
+      '<div class="ts-title">Табели</div>'+
+      '<div class="ts-form">'+
+        '<div class="field"><label>Год</label><select id="ts-year" style="width:96px">'+yearOpts+'</select></div>'+
+        '<div class="field"><label>Месяц</label><select id="ts-month" style="width:148px">'+monthOpts+'</select></div>'+
+        '<button class="btn btn-primary" id="ts-gen-btn">⚡ Сформировать</button>'+
+      '</div>'+
+    '</div>'+body+
+  '</div>';
+}
+function tsTableHTML(){
+  var ts=S.ts;
+  var dim=new Date(ts.year,ts.month,0).getDate();
+  var days=[]; for(var d=1;d<=dim;d++) days.push(d);
+  var headDays=days.map(function(d){ return '<th>'+pad(d)+'</th>'; }).join('');
+  var bodyRows=ts.rows.map(function(row){
+    var map={};
+    row.cells.forEach(function(c){ map[c.date]=c.h; });
+    var cells=days.map(function(d){
+      var ds=ts.year+'-'+pad(ts.month)+'-'+pad(d);
+      var h=map[ds];
+      return h?'<td class="ts-cell">'+parseFloat(h).toFixed(1)+'</td>':'<td class="ts-dot">·</td>';
+    }).join('');
+    return '<tr><td class="ts-emp" title="'+(row.emp?esc(row.emp.name):row.empId)+'">'+(row.emp?esc(row.emp.name):row.empId)+'</td>'+cells+'<td class="ts-sum">'+parseFloat(row.th).toFixed(1)+'</td><td class="ts-days">'+row.td+'</td></tr>';
+  }).join('');
+  return '<div class="ts-card">'+
+    '<div class="ts-card-hdr">'+
+      '<div>'+
+        '<div style="font-family:var(--font-h);font-size:15px;font-weight:700">'+MONTHS[ts.month-1]+' '+ts.year+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">Сформирован '+new Date(ts.at).toLocaleString('ru-RU')+'</div>'+
+      '</div>'+
+      '<span class="badge badge-'+ts.status.toLowerCase()+'">'+(STATUS_LABELS[ts.status]||ts.status)+'</span>'+
+    '</div>'+
+    '<div class="ts-scroll"><table class="ts-table">'+
+      '<thead><tr><th class="ts-emp">Сотрудник</th>'+headDays+'<th class="ts-sum">Итого ч</th><th class="ts-days">Дней</th></tr></thead>'+
+      '<tbody>'+bodyRows+'</tbody>'+
+    '</table></div>'+
+  '</div>';
+}
+function bindTsPage(){
+  document.getElementById('ts-gen-btn').onclick=function(){
+    var y=parseInt(document.getElementById('ts-year').value);
+    var m=parseInt(document.getElementById('ts-month').value);
+    var btn=document.getElementById('ts-gen-btn');
+    btn.disabled=true; btn.textContent='…';
+    generateTS(y,m)
+    .then(function(ts){ S.ts=ts; toast('Табель сформирован'); render(); })
+    .catch(function(e){ toast(String(e),'error'); })
+    .finally(function(){ btn.disabled=false; btn.textContent='⚡ Сформировать'; });
+  };
+}
+
+/* ══════════════ PAGE: Добавить запись ══════════════ */
+function addEntryHTML(){
+  var opts=(S.cache.objects||[]).filter(function(o){return o.active;}).map(function(o){
+    return '<option value="'+o.id+'">'+esc(o.name)+'</option>';
+  }).join('');
+  var today=new Date().toISOString().split('T')[0];
+  return '<div class="page-header">'+
+    '<div><div class="page-title">Добавить запись</div><div class="page-sub">Внесите отработанные часы</div></div>'+
+  '</div>'+
+  '<div class="card" style="max-width:480px">'+
+    '<div class="form-grid">'+
+      '<div class="field"><label>Дата</label><input id="ae-date" type="date" value="'+today+'"/><div class="field-error" id="ae-date-e"></div></div>'+
+      '<div class="field"><label>Рабочий объект</label><select id="ae-obj"><option value="">— Выберите объект —</option>'+opts+'</select><div class="field-error" id="ae-obj-e"></div></div>'+
+      '<div class="field"><label>Отработано часов</label><input id="ae-h" type="number" step="0.25" min="0.01" max="12" placeholder="напр. 7.5"/><div class="field-error" id="ae-h-e"></div></div>'+
+      '<div id="ae-global" style="display:none;font-size:11.5px;background:rgba(255,71,71,.08);color:var(--danger);padding:9px 12px;border-radius:4px;border-left:2px solid var(--danger)"></div>'+
+    '</div>'+
+    '<button class="btn btn-primary" id="ae-submit" style="margin-top:18px;width:100%">Сохранить запись →</button>'+
+  '</div>';
+}
+function bindAddEntry(){
+  document.getElementById('ae-submit').onclick=function(){
+    var date=document.getElementById('ae-date').value;
+    var objId=document.getElementById('ae-obj').value;
+    var h=document.getElementById('ae-h').value;
+    document.getElementById('ae-date-e').textContent='';
+    document.getElementById('ae-obj-e').textContent='';
+    document.getElementById('ae-h-e').textContent='';
+    document.getElementById('ae-global').style.display='none';
+    var ok=true;
+    if(!date){document.getElementById('ae-date-e').textContent='Укажите дату';ok=false;}
+    if(!objId){document.getElementById('ae-obj-e').textContent='Выберите объект';ok=false;}
+    if(!h||parseFloat(h)<=0){document.getElementById('ae-h-e').textContent='Часы должны быть > 0';ok=false;}
+    if(!ok) return;
+    var btn=document.getElementById('ae-submit');
+    btn.disabled=true; btn.textContent='…';
+    createEntry({date:date,objId:objId,h:parseFloat(h)},S.user.id)
+    .then(function(){
+      toast('Запись добавлена');
+      document.getElementById('ae-obj').value='';
+      document.getElementById('ae-h').value='';
+      btn.disabled=false; btn.textContent='Сохранить запись →';
+    })
+    .catch(function(e){
+      var el=document.getElementById('ae-global');
+      el.textContent=String(e); el.style.display='block';
+      btn.disabled=false; btn.textContent='Сохранить запись →';
+    });
+  };
+}
+
+/* ══════════════ PAGE: Мои записи ══════════════ */
+function myEntriesShell(entries){
+  entries=entries||[];
+  var yearOpts='<option value="">Все годы</option>';
+  for(var y=2020;y<=2030;y++) yearOpts+='<option value="'+y+'"'+(String(y)===S.mef.year?' selected':'')+'>'+y+'</option>';
+  var monthOpts='<option value="">Все месяцы</option>'+
+    MONTHS.map(function(m,i){ return '<option value="'+pad(i+1)+'"'+(pad(i+1)===S.mef.month?' selected':'')+'>'+m+'</option>'; }).join('');
+  var totalH=entries.reduce(function(s,e){return s+parseFloat(e.h);},0);
+  var subLabel=entries.length+' записей'+((S.mef.year||S.mef.month)?' (фильтр)':'');
+  if(entries.length>0) subLabel+=' — '+totalH.toFixed(2)+'ч';
+  var rows=entries.map(function(e){
+    var objName=e.objName||(objById(e.objId)?objById(e.objId).name:e.objId);
+    return '<tr><td>'+e.date+'</td><td>'+esc(objName)+'</td><td>'+parseFloat(e.h).toFixed(2)+'ч</td><td style="color:var(--muted);font-size:11px">'+new Date(e.at).toLocaleString('ru-RU')+'</td></tr>';
+  }).join('');
+  return '<div class="page-header">'+
+    '<div><div class="page-title">Мои записи</div><div class="page-sub">'+subLabel+'</div></div>'+
+    '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'+
+      '<div class="field"><label>Год</label><select id="mef-year" style="width:100px">'+yearOpts+'</select></div>'+
+      '<div class="field"><label>Месяц</label><select id="mef-month" style="width:148px">'+monthOpts+'</select></div>'+
+      '<button class="btn btn-ghost btn-sm" id="mef-reset" style="align-self:flex-end">Сбросить</button>'+
+      '<button class="btn btn-primary" id="goto-add" style="align-self:flex-end">+ Добавить запись</button>'+
+    '</div>'+
+  '</div>'+
+  '<div class="card"><div class="table-wrap"><table>'+
+    '<thead><tr><th>Дата</th><th>Объект</th><th>Часы</th><th>Добавлено</th></tr></thead>'+
+    '<tbody>'+(rows||'<tr><td colspan="4"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Записей не найдено</div></div></td></tr>')+'</tbody>'+
+  '</table></div></div>';
+}
+function myEntriesHTML(){ return myEntriesShell(S.cache.myEntries||[]); }
+function bindMyEntries(){
+  function reload(){
+    var qs=''; if(S.mef.year) qs+='?year='+S.mef.year; if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
+    document.getElementById('main').innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)">Загрузка…</div>';
+    api('GET','/api/time-entries/me'+qs).then(function(d){
+      S.cache.myEntries=(d||[]).map(mapEntry);
+      document.getElementById('main').innerHTML=myEntriesShell(S.cache.myEntries);
+      bindMyEntries();
+    }).catch(function(e){ toast(String(e),'error'); });
+  }
+  reload();
+  var ey=document.getElementById('mef-year');
+  var em=document.getElementById('mef-month');
+  if(ey) ey.onchange=function(){ S.mef.year=ey.value; reload(); };
+  if(em) em.onchange=function(){ S.mef.month=em.value; reload(); };
+  var reset=document.getElementById('mef-reset');
+  if(reset) reset.onclick=function(){ S.mef={year:'',month:''}; reload(); };
+  var ga=document.getElementById('goto-add');
+  if(ga) ga.onclick=function(){ nav('add-entry'); };
+}
+
+/* ══════════════ MODALS ══════════════ */
+function empFormFields(d){
+  d=d||{};
+  return '<div class="field"><label>ФИО</label><input id="mf-name" value="'+esc(d.name||'')+'"/><div class="field-error" id="mf-name-e"></div></div>'+
+    '<div class="field"><label>Номер телефона</label><input id="mf-phone" value="'+esc(d.phone||'')+'"/><div class="field-error" id="mf-phone-e"></div></div>'+
+    '<div class="field"><label>Должность</label><input id="mf-pos" value="'+esc(d.pos||'')+'"/><div class="field-error" id="mf-pos-e"></div></div>'+
+    '<div class="field"><label>Роль</label><select id="mf-role">'+
+      '<option value="EMPLOYEE"'+((!d.role||d.role==='EMPLOYEE')?' selected':'')+'>Сотрудник</option>'+
+      '<option value="ADMIN"'+(d.role==='ADMIN'?' selected':'')+'>Администратор</option>'+
+    '</select></div>'+
+    '<div id="mf-err" style="display:none;font-size:11.5px;background:rgba(255,71,71,.08);color:var(--danger);padding:9px 12px;border-radius:4px;border-left:2px solid var(--danger)"></div>';
+}
+function validateEmpForm(){
+  var n=document.getElementById('mf-name').value.trim();
+  var p=document.getElementById('mf-phone').value.trim();
+  var pos=document.getElementById('mf-pos').value.trim();
+  document.getElementById('mf-name-e').textContent='';
+  document.getElementById('mf-phone-e').textContent='';
+  document.getElementById('mf-pos-e').textContent='';
+  document.getElementById('mf-err').style.display='none';
+  var ok=true;
+  if(!n){document.getElementById('mf-name-e').textContent='Обязательное поле';ok=false;}
+  if(!p){document.getElementById('mf-phone-e').textContent='Обязательное поле';ok=false;}
+  if(!pos){document.getElementById('mf-pos-e').textContent='Обязательное поле';ok=false;}
+  return ok?{name:n,phone:p,pos:pos,role:document.getElementById('mf-role').value}:null;
+}
+
+function modalHTML(){
+  if(!S.modal) return '';
+  var t=S.modal.type, d=S.modal.data||{};
+  var body='';
+  if(t==='add-emp'){
+    body='<div class="modal-title">Новый сотрудник</div>'+
+      '<div class="form-grid">'+empFormFields()+'</div>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" id="m-cancel">Отмена</button><button class="btn btn-primary" id="m-ok">Создать →</button></div>';
+  } else if(t==='edit-emp'){
+    body='<div class="modal-title">Редактировать сотрудника</div>'+
+      '<div class="form-grid">'+empFormFields(d)+'</div>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" id="m-cancel">Отмена</button><button class="btn btn-primary" id="m-ok">Сохранить →</button></div>';
+  } else if(t==='add-obj'){
+    body='<div class="modal-title">Новый объект</div>'+
+      '<div class="field" style="margin-bottom:4px"><label>Название</label><input id="mo-name" placeholder="Объект Альфа — Алматы"/><div class="field-error" id="mo-err"></div></div>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" id="m-cancel">Отмена</button><button class="btn btn-primary" id="m-ok">Создать →</button></div>';
+  } else if(t==='edit-obj'){
+    body='<div class="modal-title">Редактировать объект</div>'+
+      '<div class="field" style="margin-bottom:4px"><label>Название</label><input id="mo-name" value="'+esc(d.name||'')+'"/><div class="field-error" id="mo-err"></div></div>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" id="m-cancel">Отмена</button><button class="btn btn-primary" id="m-ok">Сохранить →</button></div>';
+  } else if(t==='edit-entry'){
+    var opts=(S.cache.objects||[]).filter(function(o){return o.active;}).map(function(o){
+      return '<option value="'+o.id+'"'+(o.id===d.objId?' selected':'')+'>'+esc(o.name)+'</option>';
+    }).join('');
+    body='<div class="modal-title">Редактировать запись</div>'+
+      '<div class="form-grid">'+
+        '<div class="field"><label>Дата</label><input id="me-date" type="date" value="'+d.date+'"/></div>'+
+        '<div class="field"><label>Рабочий объект</label><select id="me-obj">'+opts+'</select></div>'+
+        '<div class="field"><label>Часы</label><input id="me-h" type="number" step="0.25" min="0.01" value="'+d.h+'"/></div>'+
+        '<div id="me-err" style="display:none;font-size:11.5px;background:rgba(255,71,71,.08);color:var(--danger);padding:9px 12px;border-radius:4px;border-left:2px solid var(--danger)"></div>'+
+      '</div>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" id="m-cancel">Отмена</button><button class="btn btn-primary" id="m-ok">Сохранить →</button></div>';
+  } else if(t==='confirm-del'){
+    body='<div class="modal-title">Подтвердите удаление</div>'+
+      '<p style="color:var(--muted);font-size:13px;margin-bottom:8px">Удалить '+esc(d.label)+'? Действие нельзя отменить.</p>'+
+      '<div class="modal-actions"><button class="btn btn-ghost" id="m-cancel">Отмена</button><button class="btn btn-danger" id="m-ok">Удалить</button></div>';
+  }
+  return '<div class="modal-overlay" id="m-overlay"><div class="modal">'+body+'</div></div>';
+}
+
+function bindModal(){
+  if(!S.modal) return;
+  var overlay=document.getElementById('m-overlay');
+  if(!overlay) return;
+  overlay.onclick=function(e){ if(e.target===overlay){ S.modal=null; render(); } };
+  var cancel=document.getElementById('m-cancel');
+  if(cancel) cancel.onclick=function(){ S.modal=null; render(); };
+  var ok=document.getElementById('m-ok');
+  if(!ok) return;
+  var t=S.modal.type, d=S.modal.data||{};
+
+  if(t==='add-emp'){
+    ok.onclick=function(){
+      var f=validateEmpForm(); if(!f) return;
+      ok.disabled=true;
+      createEmployee(f)
+      .then(function(){ toast('Сотрудник создан'); S.modal=null; renderWithCache(); })
+      .catch(function(e){ var el=document.getElementById('mf-err'); el.textContent=String(e); el.style.display='block'; ok.disabled=false; });
+    };
+  } else if(t==='edit-emp'){
+    ok.onclick=function(){
+      var f=validateEmpForm(); if(!f) return;
+      ok.disabled=true;
+      updateEmployee(d.id,f)
+      .then(function(){
+        if(S.user.id===d.id){ S.user.name=f.name; S.user.role=f.role; S.user.phone=f.phone; }
+        toast('Данные обновлены'); S.modal=null; renderWithCache();
+      })
+      .catch(function(e){ var el=document.getElementById('mf-err'); el.textContent=String(e); el.style.display='block'; ok.disabled=false; });
+    };
+  } else if(t==='add-obj'){
+    ok.onclick=function(){
+      var n=document.getElementById('mo-name').value.trim();
+      if(!n){ document.getElementById('mo-err').textContent='Введите название'; return; }
+      ok.disabled=true;
+      createObject(n)
+      .then(function(){ toast('Объект создан'); S.modal=null; renderWithCache(); })
+      .catch(function(e){ document.getElementById('mo-err').textContent=String(e); ok.disabled=false; });
+    };
+  } else if(t==='edit-obj'){
+    ok.onclick=function(){
+      var n=document.getElementById('mo-name').value.trim();
+      if(!n){ document.getElementById('mo-err').textContent='Введите название'; return; }
+      ok.disabled=true;
+      updateObject(d.id,{name:n})
+      .then(function(){ toast('Объект обновлён'); S.modal=null; renderWithCache(); })
+      .catch(function(e){ document.getElementById('mo-err').textContent=String(e); ok.disabled=false; });
+    };
+  } else if(t==='edit-entry'){
+    ok.onclick=function(){
+      var date=document.getElementById('me-date').value;
+      var objId=document.getElementById('me-obj').value;
+      var h=parseFloat(document.getElementById('me-h').value);
+      document.getElementById('me-err').style.display='none';
+      ok.disabled=true;
+      updateEntry(d.id,{date:date,objId:objId,h:h},S.user.id)
+      .then(function(){ toast('Запись обновлена'); S.modal=null; render(); })
+      .catch(function(e){ var el=document.getElementById('me-err'); el.textContent=String(e); el.style.display='block'; ok.disabled=false; });
+    };
+  } else if(t==='confirm-del'){
+    ok.onclick=function(){
+      ok.disabled=true;
+      var p;
+      if(d.kind==='employee') p=deleteEmployee(d.id).then(function(){toast('Сотрудник удалён');});
+      else if(d.kind==='object') p=deleteObject(d.id).then(function(){toast('Объект удалён');});
+      else p=deleteEntry(d.id).then(function(){toast('Запись удалена');});
+      p.then(function(){ S.modal=null; renderWithCache(); })
+       .catch(function(e){ toast(String(e),'error'); ok.disabled=false; });
+    };
+  }
+}
+
+render();
+
+</script>
+</body>
+</html>
