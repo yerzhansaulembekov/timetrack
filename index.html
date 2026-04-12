@@ -403,7 +403,7 @@ function bindPage(){
 
 /* ══════════════ PAGE: Сотрудники ══════════════ */
 function empPageHTML(){
-  var rows=DB.employees.map(function(e){
+  var rows=(S.cache.employees||[]).map(function(e){
     return '<tr>'+
       '<td>'+esc(e.name)+'</td>'+
       '<td>'+esc(e.phone)+'</td>'+
@@ -448,7 +448,7 @@ function bindEmpPage(){
 
 /* ══════════════ PAGE: Объекты ══════════════ */
 function objPageHTML(){
-  var rows=DB.objects.map(function(o){
+  var rows=(S.cache.objects||[]).map(function(o){
     return '<tr>'+
       '<td>'+esc(o.name)+'</td>'+
       '<td><span class="badge badge-'+(o.active?'active':'inactive')+'">'+(o.active?'Активен':'Неактивен')+'</span></td>'+
