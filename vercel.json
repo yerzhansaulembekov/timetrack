@@ -1,13 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/api/employees/:id", "destination": "/api/employees/[id]" },
-    { "source": "/api/objects/:id", "destination": "/api/objects/[id]" },
-    { "source": "/api/time-entries/me", "destination": "/api/time-entries/me" },
-    { "source": "/api/time-entries/:id", "destination": "/api/time-entries/[id]" },
-    { "source": "/api/timesheets/generate", "destination": "/api/timesheets/generate" },
-    { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
