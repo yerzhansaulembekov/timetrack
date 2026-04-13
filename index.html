@@ -246,7 +246,9 @@ function deleteEntry(id){ return api('DELETE','/api/time-entries/'+id); }
 
 function mapEntry(e){
   return {
-    id:e.id, empId:e.employeeId, date:e.workDate, objId:e.objectId,
+    id:e.id, empId:e.employeeId,
+    date:(e.workDate||'').split('T')[0],
+    objId:e.objectId,
     h:e.hoursWorked, at:e.createdAt||e.updatedAt,
     empName: e.employee?e.employee.fullName:null,
     objName: e.workObject?e.workObject.name:null
