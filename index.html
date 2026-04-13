@@ -705,7 +705,6 @@ function bindMyEntries(){
       if(S.page!=='my-entries') return;
       S.cache.myEntries=(d||[]).map(mapEntry);
       var _mm=document.getElementById('main'); if(_mm) _mm.innerHTML=myEntriesShell(S.cache.myEntries);
-      bindMyEntries();
     }).catch(function(e){ if(S.page==='my-entries') toast(String(e),'error'); });
   }
   reload();
