@@ -406,7 +406,7 @@ function bindPage(){
 
 /* ══════════════ PAGE: Сотрудники ══════════════ */
 function empPageHTML(){
-  var rows=(S.cache.employees||[]).map(function(e){
+  var emps=S.cache.employees||[]; var rows=emps.map(function(e){
     return '<tr>'+
       '<td>'+esc(e.name)+'</td>'+
       '<td>'+esc(e.phone)+'</td>'+
@@ -430,6 +430,15 @@ function empPageHTML(){
   '</table></div></div>';
 }
 function bindEmpPage(){
+  // Reload employees from API
+  api('GET','/api/employees').then(function(d){
+    S.cache.employees=(d||[]).map(function(e){
+      return {id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
+    });
+    var m=document.getElementById('main'); if(m) m.innerHTML=empPageHTML(); bindEmpPage2();
+  }).catch(function(e){ toast(String(e),'error'); });
+}
+function bindEmpPage2(){
   document.getElementById('add-emp-btn').onclick=function(){ S.modal={type:'add-emp'}; render(); };
   document.querySelectorAll('[data-act]').forEach(function(btn){
     btn.onclick=function(){
