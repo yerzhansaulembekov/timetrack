@@ -320,7 +320,7 @@ function loginByPhone(phone){
   var err=document.getElementById('li-err');
   var btn=document.getElementById('li-btn');
   btn.disabled=true; btn.textContent='…';
-  api('POST','/auth/login',{phoneNumber:phone},null)
+  api('POST','/api/login',{phoneNumber:phone},null)
   .then(function(emp){
     S.user={id:emp.id,role:emp.role,name:emp.fullName,phone:emp.phoneNumber};
     S.page=emp.role==='ADMIN'?'employees':'add-entry';
