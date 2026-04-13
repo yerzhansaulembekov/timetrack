@@ -297,7 +297,9 @@ function render(){
 }
 function renderWithCache(){
   if(!S.user){ render(); return; }
-  loadCache().then(function(){ render(); });
+  if(S._loading) return;
+  S._loading=true;
+  loadCache().then(function(){ S._loading=false; render(); }).catch(function(){ S._loading=false; render(); });
 }
 
 /* ── Login ── */
