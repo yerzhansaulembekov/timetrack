@@ -173,6 +173,7 @@ function api(method, path, body, userId) {
 
 /* ═══════════════════════════════ CACHE LOADER ══════════════════════ */
 function loadCache() {
+  if(!S.user) return Promise.resolve();
   return Promise.all([
     api('GET', '/api/employees').then(function(d){
       S.cache.employees=(d||[]).map(function(e){
