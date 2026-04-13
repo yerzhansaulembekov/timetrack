@@ -706,15 +706,14 @@ function myEntriesShell(entries){
 function myEntriesHTML(){ return myEntriesShell(S.cache.myEntries||[]); }
 function bindMyEntries(){
   function reload(){
-    if(S.page!=='my-entries') return;
     var qs=''; if(S.mef.year) qs+='?year='+S.mef.year; if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
     var _m=document.getElementById('main'); if(_m) _m.innerHTML='<div style="padding:60px;text-align:center;color:var(--muted)">Загрузка…</div>';
     api('GET','/api/time-entries/me'+qs).then(function(d){
-      if(S.page!=='my-entries') return;
+
       S.cache.myEntries=(d||[]).map(mapEntry);
       var _mm=document.getElementById('main'); if(_mm) _mm.innerHTML=myEntriesShell(S.cache.myEntries);
       bindMyEntries();
-    }).catch(function(e){ if(S.page==='my-entries') toast(String(e),'error'); });
+    }).catch(function(e){ toast(String(e),'error'); });
   }
   reload();
   var ey=document.getElementById('mef-year');
