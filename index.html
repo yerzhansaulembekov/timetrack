@@ -174,12 +174,12 @@ function api(method, path, body, userId) {
 /* ═══════════════════════════════ CACHE LOADER ══════════════════════ */
 function loadCache() {
   return Promise.all([
-    api('GET', '/employees', null, null).then(function(d){
+    api('GET', '/api/employees', null, null).then(function(d){
       S.cache.employees=(d||[]).map(function(e){
         return {id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
       });
     }).catch(function(){}),
-    api('GET', '/objects', null, null).then(function(d){
+    api('GET', '/api/objects', null, null).then(function(d){
       S.cache.objects=(d||[]).map(function(o){
         return {id:o.id,name:o.name,active:o.isActive,created:o.createdAt};
       });
@@ -191,57 +191,57 @@ function loadCache() {
 function pad(n){ return String(n).padStart(2,'0'); }
 
 function createEmployee(d){
-  return api('POST','/employees',{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
+  return api('POST','/api/employees',{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
     var emp={id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
     S.cache.employees.push(emp); return emp;
   });
 }
 function updateEmployee(id,d){
-  return api('PUT','/employees/'+id,{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
+  return api('PUT','/api/employees/'+id,{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
     var emp=empById(id); if(emp){emp.phone=e.phoneNumber;emp.name=e.fullName;emp.pos=e.position;emp.role=e.role;}
     return e;
   });
 }
 function deleteEmployee(id){
-  return api('DELETE','/employees/'+id).then(function(){
+  return api('DELETE','/api/employees/'+id).then(function(){
     S.cache.employees=S.cache.employees.filter(function(e){return e.id!==id;});
   });
 }
 function toggleEmployee(id,v){
-  return api('PATCH','/employees/'+id+'/toggle',{isActive:v}).then(function(){
+  return api('PATCH','/api/employees/'+id+'/toggle',{isActive:v}).then(function(){
     var emp=empById(id); if(emp) emp.active=v;
   });
 }
 
 function createObject(name){
-  return api('POST','/objects',{name:name}).then(function(o){
+  return api('POST','/api/objects',{name:name}).then(function(o){
     var obj={id:o.id,name:o.name,active:o.isActive}; S.cache.objects.push(obj); return obj;
   });
 }
 function updateObject(id,d){
-  return api('PUT','/objects/'+id,d).then(function(o){
+  return api('PUT','/api/objects/'+id,d).then(function(o){
     var obj=objById(id);
     if(obj){if(d.name!==undefined)obj.name=d.name;if(d.active!==undefined)obj.active=d.active;}
     return o;
   });
 }
 function deleteObject(id){
-  return api('DELETE','/objects/'+id).then(function(){
+  return api('DELETE','/api/objects/'+id).then(function(){
     S.cache.objects=S.cache.objects.filter(function(o){return o.id!==id;});
   });
 }
 
 function createEntry(d, userId){
-  return api('POST','/time-entries',{workDate:d.date,objectId:d.objId,hoursWorked:parseFloat(d.h)});
+  return api('POST','/api/time-entries',{workDate:d.date,objectId:d.objId,hoursWorked:parseFloat(d.h)});
 }
 function updateEntry(id,d,actorId){
   var body={};
   if(d.date)  body.workDate=d.date;
   if(d.objId) body.objectId=d.objId;
   if(d.h!=null) body.hoursWorked=parseFloat(d.h);
-  return api('PUT','/time-entries/'+id,body);
+  return api('PUT','/api/time-entries/'+id,body);
 }
-function deleteEntry(id){ return api('DELETE','/time-entries/'+id); }
+function deleteEntry(id){ return api('DELETE','/api/time-entries/'+id); }
 
 function mapEntry(e){
   return {
@@ -253,7 +253,7 @@ function mapEntry(e){
 }
 
 function generateTS(year,month){
-  return api('POST','/timesheets/generate',{year:parseInt(year),month:parseInt(month)}).then(function(ts){
+  return api('POST','/api/timesheets/generate',{year:parseInt(year),month:parseInt(month)}).then(function(ts){
     return {
       id:ts.id, year:ts.year, month:ts.month, status:ts.status, at:ts.generatedAt,
       rows:(ts.rows||[]).map(function(r){
