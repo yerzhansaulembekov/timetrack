@@ -524,6 +524,15 @@ function allEntriesShell(entries){
 }
 function allEntriesHTML(){ return allEntriesShell(S.cache.allEntries||[]); }
 function bindAllEntries(){
+  // Load entries from API first
+  var qs=''; if(S.ef.year) qs+='?year='+S.ef.year; if(S.ef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.ef.month);
+  api('GET','/api/time-entries'+qs).then(function(d){
+    S.cache.allEntries=(d||[]).map(mapEntry);
+    var m=document.getElementById('main'); if(m && S.page==='all-entries') m.innerHTML=allEntriesShell(S.cache.allEntries);
+    bindAllEntries2();
+  }).catch(function(e){ toast(String(e),'error'); });
+}
+function bindAllEntries2(){
   function reload(){
     if(S.page!=='all-entries') return;
     var qs=''; if(S.ef.year) qs+='?year='+S.ef.year; if(S.ef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.ef.month);
