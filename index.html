@@ -680,7 +680,7 @@ function myEntriesShell(entries){
   if(entries.length>0) subLabel+=' — '+totalH.toFixed(2)+'ч';
   var rows=entries.map(function(e){
     var objName=e.objName||(objById(e.objId)?objById(e.objId).name:e.objId);
-    return '<tr><td>'+e.date+'</td><td>'+esc(objName)+'</td><td>'+parseFloat(e.h).toFixed(2)+'ч</td><td style="color:var(--muted);font-size:11px">'+new Date(e.at).toLocaleString('ru-RU')+'</td></tr>';
+    return '<tr><td>'+(e.date||'').split('T')[0]+'</td><td>'+esc(objName)+'</td><td>'+parseFloat(e.h).toFixed(2)+'ч</td><td style="color:var(--muted);font-size:11px">'+new Date(e.at).toLocaleString('ru-RU')+'</td></tr>';
   }).join('');
   return '<div class="page-header">'+
     '<div><div class="page-title">Мои записи</div><div class="page-sub">'+subLabel+'</div></div>'+
