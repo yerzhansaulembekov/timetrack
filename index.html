@@ -232,16 +232,16 @@ function deleteObject(id){
 }
 
 function createEntry(d, userId){
-  return api('POST','/time-entries',{workDate:d.date,objectId:d.objId,hoursWorked:parseFloat(d.h)});
+  return api('POST','/api/time-entries',{workDate:d.date,objectId:d.objId,hoursWorked:parseFloat(d.h)});
 }
 function updateEntry(id,d,actorId){
   var body={};
   if(d.date)  body.workDate=d.date;
   if(d.objId) body.objectId=d.objId;
   if(d.h!=null) body.hoursWorked=parseFloat(d.h);
-  return api('PUT','/time-entries/'+id,body);
+  return api('PUT','/api/time-entries/'+id,body);
 }
-function deleteEntry(id){ return api('DELETE','/time-entries/'+id); }
+function deleteEntry(id){ return api('DELETE','/api/time-entries/'+id); }
 
 function mapEntry(e){
   return {
