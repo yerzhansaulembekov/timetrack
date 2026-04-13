@@ -175,7 +175,7 @@ function api(method, path, body, userId) {
 function loadCache() {
   if(!S.user) return Promise.resolve();
   return Promise.all([
-    api('GET', '/api/employees').then(function(d){
+    S.user.role==='ADMIN' ? api('GET', '/api/employees') : Promise.resolve([]).then(function(d){
       S.cache.employees=(d||[]).map(function(e){
         return {id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
       });
