@@ -253,7 +253,7 @@ function mapEntry(e){
 }
 
 function generateTS(year,month){
-  return api('POST','/timesheets/generate',{year:parseInt(year),month:parseInt(month)}).then(function(ts){
+  return api('POST','/api/timesheets/generate',{year:parseInt(year),month:parseInt(month)}).then(function(ts){
     return {
       id:ts.id, year:ts.year, month:ts.month, status:ts.status, at:ts.generatedAt,
       rows:(ts.rows||[]).map(function(r){
