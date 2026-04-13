@@ -174,12 +174,12 @@ function api(method, path, body, userId) {
 /* ═══════════════════════════════ CACHE LOADER ══════════════════════ */
 function loadCache() {
   return Promise.all([
-    api('GET', '/employees', null, null).then(function(d){
+    api('GET', '/api/employees', null, null).then(function(d){
       S.cache.employees=(d||[]).map(function(e){
         return {id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
       });
     }).catch(function(){}),
-    api('GET', '/objects', null, null).then(function(d){
+    api('GET', '/api/objects', null, null).then(function(d){
       S.cache.objects=(d||[]).map(function(o){
         return {id:o.id,name:o.name,active:o.isActive,created:o.createdAt};
       });
@@ -191,7 +191,7 @@ function loadCache() {
 function pad(n){ return String(n).padStart(2,'0'); }
 
 function createEmployee(d){
-  return api('POST','/employees',{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
+  return api('POST','/api/employees',{phoneNumber:d.phone,fullName:d.name,position:d.pos,role:d.role}).then(function(e){
     var emp={id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
     S.cache.employees.push(emp); return emp;
   });
@@ -214,7 +214,7 @@ function toggleEmployee(id,v){
 }
 
 function createObject(name){
-  return api('POST','/objects',{name:name}).then(function(o){
+  return api('POST','/api/objects',{name:name}).then(function(o){
     var obj={id:o.id,name:o.name,active:o.isActive}; S.cache.objects.push(obj); return obj;
   });
 }
@@ -336,8 +336,8 @@ function bindLogin(){
     loginByPhone(p);
   };
   document.getElementById('li-phone').onkeydown=function(e){ if(e.key==='Enter') document.getElementById('li-btn').click(); };
-  document.getElementById('demo-emp').onclick=function(){ loginByPhone('+7-701-111-2222'); };
-  document.getElementById('demo-adm').onclick=function(){ loginByPhone('+7-701-000-0001'); };
+
+
 }
 
 /* ── Shell ── */
