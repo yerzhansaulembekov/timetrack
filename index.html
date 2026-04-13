@@ -208,7 +208,7 @@ function deleteEmployee(id){
   });
 }
 function toggleEmployee(id,v){
-  return api('PATCH','/api/employees/'+id+'/toggle',{isActive:v}).then(function(){
+  return api('PATCH','/api/employees/'+id,{isActive:v}).then(function(){
     var emp=empById(id); if(emp) emp.active=v;
   });
 }
