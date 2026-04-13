@@ -696,23 +696,17 @@ function myEntriesShell(entries){
     '<tbody>'+(rows||'<tr><td colspan="4"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Записей не найдено</div></div></td></tr>')+'</tbody>'+
   '</table></div></div>';
 }
-function myEntriesHTML(){ 
-  // Trigger async load on first render
-  setTimeout(function(){
-    var m=document.getElementById('main');
-    if(m && S.page==='my-entries'){
-      var qs=''; 
-      if(S.mef.year) qs+='?year='+S.mef.year; 
-      if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
-      api('GET','/api/time-entries/me'+qs).then(function(d){
-        S.cache.myEntries=(d||[]).map(mapEntry);
-        if(S.page==='my-entries'){ m.innerHTML=myEntriesShell(S.cache.myEntries); bindMyEntries2(); }
-      }).catch(function(e){ toast(String(e),'error'); });
-    }
-  },0);
-  return myEntriesShell(S.cache.myEntries||[]); 
-}
+function myEntriesHTML(){ return myEntriesShell(S.cache.myEntries||[]); }
 function bindMyEntries2(){
+  // Load entries from API
+  var qs=''; if(S.mef.year) qs+='?year='+S.mef.year; if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
+  api('GET','/api/time-entries/me'+qs).then(function(d){
+    S.cache.myEntries=(d||[]).map(mapEntry);
+    var m=document.getElementById('main'); if(m) m.innerHTML=myEntriesShell(S.cache.myEntries);
+    bindMyEntries3();
+  }).catch(function(e){ toast(String(e),'error'); });
+}
+function bindMyEntries3(){
   function reload(){
     if(S.page!=='my-entries') return;
     var qs=''; if(S.mef.year) qs+='?year='+S.mef.year; if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
@@ -721,7 +715,7 @@ function bindMyEntries2(){
       if(S.page!=='my-entries') return;
       S.cache.myEntries=(d||[]).map(mapEntry);
       var _mm=document.getElementById('main'); if(_mm) _mm.innerHTML=myEntriesShell(S.cache.myEntries);
-      if(typeof bindMyEntries2==="function") bindMyEntries2();
+      if(typeof bindMyEntries3==="function") bindMyEntries3();
     }).catch(function(e){ if(S.page==='my-entries') toast(String(e),'error'); });
   }
   reload();
