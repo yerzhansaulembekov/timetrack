@@ -531,7 +531,6 @@ function bindAllEntries(){
       if(S.page!=='all-entries') return;
       S.cache.allEntries=(d||[]).map(mapEntry);
       var _me=document.getElementById('main'); if(_me) _me.innerHTML=allEntriesShell(S.cache.allEntries);
-      bindAllEntries();
     }).catch(function(e){ if(S.page==='all-entries') toast(String(e),'error'); });
   }
   reload();
