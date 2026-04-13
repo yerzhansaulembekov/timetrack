@@ -393,7 +393,7 @@ function bindPage(){
     case 'all-entries': bindAllEntries();     break;
     case 'timesheets':  bindTsPage();         break;
     case 'add-entry':   bindAddEntry();       break;
-    case 'my-entries':  bindMyEntries();      break;
+    case 'my-entries':  if(typeof bindMyEntries2==="function") bindMyEntries2();      break;
   }
 }
 
@@ -721,7 +721,7 @@ function bindMyEntries2(){
       if(S.page!=='my-entries') return;
       S.cache.myEntries=(d||[]).map(mapEntry);
       var _mm=document.getElementById('main'); if(_mm) _mm.innerHTML=myEntriesShell(S.cache.myEntries);
-      bindMyEntries();
+      if(typeof bindMyEntries2==="function") bindMyEntries2();
     }).catch(function(e){ if(S.page==='my-entries') toast(String(e),'error'); });
   }
   reload();
