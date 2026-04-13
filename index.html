@@ -309,15 +309,15 @@ function loginHTML(){
     '<div class="card">'+
       '<div class="field" style="margin-bottom:14px">'+
         '<label>Номер телефона</label>'+
-        '<input id="li-phone" type="tel" placeholder="+7-701-111-2222" autocomplete="tel"/>'+
+        '<input id="li-phone" type="tel" placeholder="87015364054" autocomplete="tel"/>'+
         '<div class="field-error" id="li-err"></div>'+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%" id="li-btn">Войти →</button>'+
       '<div class="login-sep"></div>'+
       '<div class="demo-label">Быстрый вход</div>'+
       '<div class="demo-btns">'+
-        '<button class="demo-btn" id="demo-emp"><strong>Сотрудник</strong>+7-701-111-2222</button>'+
-        '<button class="demo-btn" id="demo-adm"><strong>Администратор</strong>+7-701-000-0001</button>'+
+        '<button class="demo-btn" id="demo-emp"><strong>Сотрудник</strong>87015364054</button>'+
+        '<button class="demo-btn" id="demo-adm"><strong>Администратор</strong>87015364054</button>'+
       '</div>'+
     '</div>'+
   '</div></div><div class="toasts" id="toasts-root"></div>';
@@ -342,8 +342,8 @@ function bindLogin(){
     loginByPhone(p);
   };
   document.getElementById('li-phone').onkeydown=function(e){ if(e.key==='Enter') document.getElementById('li-btn').click(); };
-  document.getElementById('demo-emp').onclick=function(){ loginByPhone('+7-701-111-2222'); };
-  document.getElementById('demo-adm').onclick=function(){ loginByPhone('+7-701-000-0001'); };
+  document.getElementById('demo-emp').onclick=function(){ loginByPhone('87015364054'); };
+  document.getElementById('demo-adm').onclick=function(){ loginByPhone('87015364054'); };
 }
 
 /* ── Shell ── */
