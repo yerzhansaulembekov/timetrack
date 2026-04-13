@@ -709,10 +709,10 @@ function bindMyEntries2(){
 function bindMyEntries3(){
   var ey=document.getElementById('mef-year');
   var em=document.getElementById('mef-month');
-  if(ey) ey.onchange=function(){ S.mef.year=ey.value; reload(); };
-  if(em) em.onchange=function(){ S.mef.month=em.value; reload(); };
+  if(ey) ey.onchange=function(){ S.mef.year=ey.value; bindMyEntries2(); };
+  if(em) em.onchange=function(){ S.mef.month=em.value; bindMyEntries2(); };
   var reset=document.getElementById('mef-reset');
-  if(reset) reset.onclick=function(){ S.mef={year:'',month:''}; reload(); };
+  if(reset) reset.onclick=function(){ S.mef={year:'',month:''}; bindMyEntries2(); };
   var ga=document.getElementById('goto-add');
   if(ga) ga.onclick=function(){ nav('add-entry'); };
 }
