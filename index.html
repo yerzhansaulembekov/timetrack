@@ -174,12 +174,12 @@ function api(method, path, body, userId) {
 /* ═══════════════════════════════ CACHE LOADER ══════════════════════ */
 function loadCache() {
   return Promise.all([
-    api('GET', '/employees', null, null).then(function(d){
+    api('GET', '/api/employees').then(function(d){
       S.cache.employees=(d||[]).map(function(e){
         return {id:e.id,phone:e.phoneNumber,name:e.fullName,pos:e.position,role:e.role,active:e.isActive,created:e.createdAt};
       });
     }).catch(function(){}),
-    api('GET', '/objects', null, null).then(function(d){
+    api('GET', '/api/objects').then(function(d){
       S.cache.objects=(d||[]).map(function(o){
         return {id:o.id,name:o.name,active:o.isActive,created:o.createdAt};
       });
