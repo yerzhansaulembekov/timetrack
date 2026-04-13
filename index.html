@@ -696,8 +696,23 @@ function myEntriesShell(entries){
     '<tbody>'+(rows||'<tr><td colspan="4"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Записей не найдено</div></div></td></tr>')+'</tbody>'+
   '</table></div></div>';
 }
-function myEntriesHTML(){ return myEntriesShell(S.cache.myEntries||[]); }
-function bindMyEntries(){
+function myEntriesHTML(){ 
+  // Trigger async load on first render
+  setTimeout(function(){
+    var m=document.getElementById('main');
+    if(m && S.page==='my-entries'){
+      var qs=''; 
+      if(S.mef.year) qs+='?year='+S.mef.year; 
+      if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
+      api('GET','/api/time-entries/me'+qs).then(function(d){
+        S.cache.myEntries=(d||[]).map(mapEntry);
+        if(S.page==='my-entries'){ m.innerHTML=myEntriesShell(S.cache.myEntries); bindMyEntries2(); }
+      }).catch(function(e){ toast(String(e),'error'); });
+    }
+  },0);
+  return myEntriesShell(S.cache.myEntries||[]); 
+}
+function bindMyEntries2(){
   function reload(){
     if(S.page!=='my-entries') return;
     var qs=''; if(S.mef.year) qs+='?year='+S.mef.year; if(S.mef.month) qs+=(qs?'&':'?')+'month='+parseInt(S.mef.month);
